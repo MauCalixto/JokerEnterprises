@@ -1,0 +1,498 @@
+***** VLAN'S *****
+-- S1 --
+vlan 10
+name SoporteN2
+vlan 20
+name Desarrollo
+vlan 30
+name ServicioCliente
+vlan 40
+name Seguridad
+vlan 50
+name SoporteN1
+vlan 60
+name Audiovisual
+vlan 70
+name SoporteN3
+exit
+
+int r f0/1-2
+sw m t
+
+int g0/1
+sw mode trunk
+sw trunk native vlan 100
+
+vtp mode server
+vtp domain SuEspacio
+vtp password vlan1234
+
+int range f0/3-13
+sw m access
+sw a v 10
+
+int r f0/14-24
+sw m a
+sw a v 20
+
+
+-- S2 --
+int r f0/1-2
+sw m t
+
+vtp m c
+vtp domain SuEspacio
+vtp password vlan1234
+
+int range f0/3-9
+sw mode access
+sw access vlan 30
+
+int range fa0/10-16
+sw mode access
+sw access vlan 40
+
+int r f0/17-24
+sw m a
+sw a v 50
+
+
+-- S3 --
+int r f0/1-2
+sw m t
+
+vtp m c
+vtp domain SuEspacio
+vtp password vlan1234
+
+int range fa0/3-13
+sw mode access
+sw access vlan 60
+
+int r f0/14-24
+sw m a
+sw a v 70
+
+
+***** INTERFACES *****
+-- R1 --
+ipv6 unicast-routing
+int s0/0/0
+ip address 201.160.224.41 255.255.255.252
+ipv6 address 2001:db8:cafe:A::1/64
+no shutdown
+
+int s0/0/1
+ip address 201.160.224.45 255.255.255.252
+ipv6 address 2001:db8:cafe:B::1/64
+no shutdown
+
+int g0/0
+ip address 173.201.192.1 255.255.255.0
+ipv6 address FE80::1 link-local
+ipv6 address 2001:db8:abc:5678::1/64
+no shutdown
+
+-- R2 --
+ipv6 unicast-routing
+int s0/0/0
+ip add 201.160.224.42 255.255.255.252
+ipv6 address 2001:db8:cafe:A::2/64
+no shut
+
+int s0/0/1
+ip add 201.160.224.49 255.255.255.252
+ipv6 address 2001:db8:cafe:C::1/64
+no shut
+
+-- R3 --
+ipv6 unicast-routing
+int s0/0/0
+ip add 201.160.224.46 255.255.255.252
+ipv6 address 2001:db8:cafe:B::2/64
+no shut
+
+int s0/0/1
+ip add 201.160.224.50 255.255.255.252
+ipv6 address 2001:db8:cafe:C::2/64
+no shut
+
+int g0/0
+ip add 201.160.224.1 255.255.255.240
+ipv6 address FE80::A link-local
+ipv6 address 2001:db8:abcd:A::1/64
+no shut
+
+int g0/1
+ip add 201.160.224.17 255.255.255.240
+ipv6 address FE80::B link-local
+ipv6 address 2001:db8:abcd:B::1/64
+no shut
+
+***** SUBINTERFACES (R2) *****
+
+int g0/1.10
+encapsulation dot1Q 10
+ip address 201.160.223.161 255.255.255.224
+ipv6 address FE80::10 link-local
+ipv6 address 2001:db8:abcd:10::1/64
+int g0/1.20
+encapsulation dot1Q 20
+ip address 201.160.223.65 255.255.255.192
+ipv6 address FE80::20 link-local
+ipv6 address 2001:db8:abcd:20::1/64
+int g0/1.30
+encapsulation dot1Q 30
+ip address 201.160.223.193 255.255.255.224
+ipv6 address FE80::30 link-local
+ipv6 address 2001:db8:abcd:30::1/64
+int g0/1.40
+encapsulation dot1Q 40
+ip address 201.160.223.225 255.255.255.224
+ipv6 address FE80::40 link-local
+ipv6 address 2001:db8:abcd:40::1/64
+int g0/1.50
+encapsulation dot1Q 50
+ip address 201.160.223.1 255.255.255.192
+ipv6 address FE80::50 link-local
+ipv6 address 2001:db8:abcd:50::1/64
+int g0/1.60
+encapsulation dot1Q 60
+ip address 201.160.223.129 255.255.255.224
+ipv6 address FE80::60 link-local
+ipv6 address 2001:db8:abcd:60::1/64
+int g0/1.70
+encapsulation dot1Q 70
+ip address 201.160.224.33 255.255.255.248
+ipv6 address FE80::70 link-local
+ipv6 address 2001:db8:abcd:70::1/64
+
+int g0/1
+no shutdown
+
+
+***** DHCPv4 *****
+
+-- R1 --
+ip dhcp pool Audiovisual
+network 201.160.223.128 255.255.255.224
+default-router 201.160.223.129
+dns-server 201.160.223.158
+exit
+
+ip dhcp pool SoporteN3
+network 201.160.224.32 255.255.255.248
+default-router 201.160.224.33
+dns-server 201.160.224.38
+exit
+
+-- R2 --
+ip dhcp pool SoporteN2
+network 201.160.223.160 255.255.255.224
+default-router 201.160.223.161
+dns-server 201.160.223.190
+exit
+
+ip dhcp pool Desarrollo
+network 201.160.223.64 255.255.255.192
+default-router 201.160.223.65
+dns-server 201.160.223.126
+exit
+
+int g0/1.30
+encapsulation dot1q 30
+ip helper-address 201.160.223.2
+
+int g0/1.40
+encapsulation dot1q 40
+ip helper-address 201.160.223.2
+
+int g0/1.50
+encapsulation dot1q 50
+ip helper-address 201.160.223.2
+
+int g0/1.60
+encapsulation dot1q 60
+ip helper-address 201.160.224.41
+
+int g0/1.70
+encapsulation dot1q 70
+ip helper-address 201.160.224.41
+
+-- R3 --
+ip dhcp pool Administracion
+network 201.160.224.0 255.255.255.240
+default-router 201.160.224.1
+dns-server 201.160.224.14
+exit
+
+ip dhcp pool Marketing
+network 201.160.224.16 255.255.255.240
+default-router 201.160.224.17
+dns-server 201.160.224.30
+exit
+
+***** DHCPv6 *****
+
+--- R2 ---
+ipv6 dhcp pool VLAN-10
+dns-server 2001:db8:abcd:10::1
+prefix-delegation pool 10-VLAN lifetime 86400 60
+ex
+ipv6 local pool 10-VLAN 2001:db8:abcd:10::/64 64
+int g0/1.10
+ipv6 dhcp server VLAN-10
+no shut
+ex
+
+ipv6 dhcp pool VLAN-20
+dns-server 2001:db8:abcd:20::1
+prefix-delegation pool 20-VLAN lifetime 86400 60
+ex
+ipv6 local pool 20-VLAN 2001:db8:abcd:20::/64 64
+int g0/1.20
+ipv6 dhcp server VLAN-20
+no shut
+ex
+
+ipv6 dhcp pool VLAN-30
+dns-server 2001:db8:abcd:30::1
+prefix-delegation pool 30-VLAN lifetime 86400 60
+ex
+ipv6 local pool 30-VLAN 2001:db8:abcd:30::/64 64
+int g0/1.30
+ipv6 dhcp server VLAN-30
+no shut
+ex
+
+ipv6 dhcp pool VLAN-40
+dns-server 2001:db8:abcd:40::1
+prefix-delegation pool 40-VLAN lifetime 86400 60
+ex
+ipv6 local pool 40-VLAN 2001:db8:abcd:40::/64 64
+int g0/1.40
+ipv6 dhcp server VLAN-40
+no shut
+ex
+
+ipv6 dhcp pool VLAN-50
+dns-server 2001:db8:abcd:50::1
+prefix-delegation pool 50-VLAN lifetime 86400 60
+ex
+ipv6 local pool 50-VLAN 2001:db8:abcd:50::/64 64
+int g0/1.50
+ipv6 dhcp server VLAN-50
+no shut
+ex
+
+ipv6 dhcp pool VLAN-60
+dns-server 2001:db8:abcd:60::1
+prefix-delegation pool 60-VLAN lifetime 86400 60
+ex
+ipv6 local pool 60-VLAN 2001:db8:abcd:60::/64 64
+int g0/1.60
+ipv6 dhcp server VLAN-60
+no shut
+ex
+
+ipv6 dhcp pool VLAN-70
+dns-server 2001:db8:abcd:70::1
+prefix-delegation pool 70-VLAN lifetime 86400 60
+ex
+ipv6 local pool 70-VLAN 2001:db8:abcd:70::/64 64
+int g0/1.70
+ipv6 dhcp server VLAN-70
+no shut
+ex
+
+--- R3 ---
+ipv6 dhcp pool LAN-Administracion
+dns-server 2001:db8:abcd:A::1
+prefix-delegation pool Administracion-LAN lifetime 86400 60
+ex
+ipv6 local pool Administracion-LAN 2001:db8:abcd:A::/64 64
+int g0/0
+ipv6 dhcp server LAN-Administracion
+no shut
+ex
+
+ipv6 dhcp pool LAN-Marketing
+dns-server 2001:db8:abcd:B::1
+prefix-delegation pool Marketing-LAN lifetime 86400 60
+ex
+ipv6 local pool Marketing-LAN 2001:db8:abcd:B::/64 64
+int g0/0
+ipv6 dhcp server LAN-Marketing
+no shut
+ex
+
+
+***** PROTOCOLO EIGRP (IPv4) *****
+
+--- R1 ---
+router eigrp 10
+eigrp router-id 1.1.1.1
+network 201.160.224.40 0.0.0.3
+network 201.160.224.44 0.0.0.3
+network 173.201.192.0 0.0.0.255
+no auto-summary
+
+--- R2 ---
+router eigrp 10
+eigrp router-id 2.2.2.2
+network 201.160.224.40 0.0.0.3
+network 201.160.224.48 0.0.0.3
+net 201.160.223.0 0.0.0.63
+net 201.160.223.64 0.0.0.63
+net 201.160.223.128 0.0.0.31
+net 201.160.223.160 0.0.0.31
+net 201.160.223.192 0.0.0.31
+net 201.160.223.224 0.0.0.31
+net 201.160.224.32 0.0.0.7
+no auto-summary
+
+--- R3 ---
+router eigrp 10
+eigrp router-id 3.3.3.3
+network 201.160.224.44 0.0.0.3
+network 201.160.224.48 0.0.0.3
+net 201.160.224.0 0.0.0.15
+net 201.160.224.16 0.0.0.15
+no auto-summary
+
+
+***** PROTOCOLO EIGRP (IPv6) *****
+
+--- R1 ---
+ipv6 router eigrp 10
+eigrp router-id 1.1.1.1
+no shut
+ex
+int s0/0/0
+ipv6 eigrp 10
+int s0/0/1
+ipv6 eigrp 10
+int g0/0
+ipv6 eigrp 10
+
+--- R2 ---
+ipv6 router eigrp 10
+eigrp router-id 2.2.2.2
+no shut
+ex
+int s0/0/0
+ipv6 eigrp 10
+int s0/0/1
+ipv6 eigrp 10
+int g0/1.10
+encapsulation dot1q 10
+ipv6 eigrp 10
+int g0/1.20
+encapsulation dot1q 20
+ipv6 eigrp 20
+int g0/1.30
+encapsulation dot1q 30
+ipv6 eigrp 30
+int g0/1.40
+encapsulation dot1q 40
+ipv6 eigrp 40
+int g0/1.50
+encapsulation dot1q 50
+ipv6 eigrp 50
+int g0/1.60
+encapsulation dot1q 60
+ipv6 eigrp 60
+int g0/1.70
+encapsulation dot1q 70
+ipv6 eigrp 70
+
+--- R3 ---
+ipv6 router eigrp 10
+eigrp router-id 3.3.3.3
+no shut
+ex
+int s0/0/0
+ipv6 eigrp 10
+int s0/0/1
+ipv6 eigrp 10
+int g0/0
+ipv6 eigrp 10
+int g0/1
+ipv6 eigrp 10
+
+***** STP (S1) *****
+spanning-tree vlan 1 root primary
+
+
+***** NAT (R1) *****
+ip nat pool SUESPACIO.NET 201.160.225.1 201.160.225.236 netmask 255.255.255.0
+access-list 1 permit 201.160.0.0 0.0.255.255
+ip nat inside source list 1 pool SUESPACIO.NET
+int s0/0/0
+ip nat inside
+int s0/0/1
+ip nat inside
+int g0/0
+ip nat outside
+exit
+
+
+***** ACL *****
+
+--- R1 ---
+access-list 1 permit 201.160.0.0 0.0.255.255
+
+--- R2 ---
+access-list 100 remark Esta ACL no permite que Servicio Al Cliente no comunique ni con Administracion ni con Marketing
+access-list 100 deny ip 201.160.223.192 0.0.0.31 201.160.224.0 0.0.0.15
+access-list 100 deny ip 201.160.223.192 0.0.0.31 201.160.224.16 0.0.0.15
+access-list 100 permit ip any any
+int g0/1.30
+ip access-group 100 in
+exit
+
+
+--- R3 ---
+ip access-list extended No_Impresora
+remark Esta ACL deniega las redes del lado izquierdo con la impresora de Marketing
+deny ip 201.160.223.160 0.0.0.31 host 201.160.224.21
+deny ip 201.160.223.64 0.0.0.63 host 201.160.224.21
+deny ip 201.160.223.192 0.0.0.31 host 201.160.224.21 
+deny ip 201.160.223.224 0.0.0.31 host 201.160.224.21 
+deny ip 201.160.223.0 0.0.0.63 host 201.160.224.21
+deny ip 201.160.223.128 0.0.0.31 host 201.160.224.21
+deny ip 201.160.224.32 0.0.0.3 host 201.160.224.21
+permit ip any any
+exit
+interface g0/1
+ip access-group No_Impresora out
+exit
+
+ip access-list extended No_FTP
+remark Esta ACL deniega la red Administracion al acceso FTP del servidor de Soporte N1
+deny tcp 201.160.224.0 0.0.0.15 host 201.160.223.2 eq 21
+permit ip any any
+exit
+int g0/0
+ip access-group No_FTP in
+exit
+
+
+***** Configuración básica *****
+enable
+configure terminal
+hostname (nombre)
+enable secret SecretSuEspacio.net
+line console 0
+password SuEspacio.net
+login
+exit
+line vty 0 4
+password SuEspacio.net
+login
+exit
+service password-encryption
+copy running-config startup-config
+
+
+
